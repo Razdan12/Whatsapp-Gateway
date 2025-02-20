@@ -14,17 +14,32 @@ datasource db {
 }
 
 model Message {
-  id         Int      @id @default(autoincrement())
-  message    String
-  from       String?
-  to         String?
-  timestamp  DateTime @default(now())
-  direction  String   // 'incoming' atau 'outgoing'
+  id        String   @id @default(uuid())
+  message   String
+  from      String?
+  to        String?
+  timestamp DateTime @default(now())
+  direction String
 }
 
 model Session {
-  id         Int      @id @default(autoincrement())
-  sessionId  String   @unique
-  authState  Json
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid())
+  sessionId String   @unique
+  authState Json
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id       String   @id @default(uuid())
+  username String    @unique
+  password String
+  apiTokens ApiToken[]
+}
+
+model ApiToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
 }

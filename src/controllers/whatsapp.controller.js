@@ -1,32 +1,29 @@
-// src/controllers/whatsapp.controller.js
 export function getStatus(req, res) {
-  // Ambil sessionId dari query, default ke 'device1'
-  const sessionId = req.query.sessionId || 'device1';
+  const userId = req.apiToken.user.id;
+  const sessionId = String(userId);
   if (globalThis.latestQrs && globalThis.latestQrs[sessionId]) {
     res.json({ sessionId, qr: globalThis.latestQrs[sessionId] });
   } else {
-    res.json({ message: `QR code for session ${sessionId} not available, please wait.` });
+    res.json({ message: `QR code for session ${sessionId} not available. Create session first.` });
   }
 }
 
 export async function sendMessage(req, res) {
   try {
-    const sessionId = req.query.sessionId || 'device1';
-    const client = globalThis.whatsappClients ? globalThis.whatsappClients[sessionId] : null;
+    const userId = req.apiToken.user.id;
+    const sessionId = String(userId);
+    const client = globalThis.whatsappClients[sessionId];
     if (!client) {
-      res.status(400).send('Session not found.');
-      return;
+      return res.status(400).json({ error: `No session found for user ${userId}. Please create session first.` });
     }
-    const number = req.query.number;
-    const message = req.query.message;
+    const { number, message } = req.query;
     if (!number || !message) {
-      res.status(400).send('Parameters "number" and "message" are required.');
-      return;
+      return res.status(400).json({ error: 'Parameters "number" and "message" are required.' });
     }
     const jid = `${number}@s.whatsapp.net`;
     const result = await client.sendMessage(jid, { text: message });
-    res.send(result);
+    res.json(result);
   } catch (error) {
-    res.status(500).send(error.toString());
+    res.status(500).json({ error: error.toString() });
   }
 }

@@ -1,12 +1,10 @@
-// src/routes/whatsapp.routes.js
 import { Router } from 'express';
 import { getStatus, sendMessage } from '../controllers/whatsapp.controller.js';
-import { createSession } from '../controllers/session.controller.js';
+import { waAuthMiddleware } from '../middleware/waAuth.js';
 
 const router = Router();
 
-router.get('/', getStatus);
-router.get('/send-message', sendMessage);
-router.get('/create-session', createSession);
+router.get('/', waAuthMiddleware, getStatus);
+router.get('/send-message', waAuthMiddleware, sendMessage);
 
 export default router;
