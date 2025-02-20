@@ -1,59 +1,50 @@
+// src/index.js
 import express from 'express';
-import pkg from '@whiskeysockets/baileys';
-
-const { default: makeWASocket, useMultiFileAuthState } = pkg;
+import http from 'http';
+import { Server } from 'socket.io';
+import whatsappRoutes from './routes/whatsapp.routes.js';
+import { createWhatsAppClient } from './services/whatsapp.service.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Fungsi untuk memulai client WhatsApp
-async function startWhatsApp() {
-  // Menggunakan direktori 'auth_info' untuk menyimpan kredensial
-  const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
+// Buat server HTTP dan Socket.IO
+const server = http.createServer(app);
+const io = new Server(server);
 
-  const client = makeWASocket({
-    auth: state,
-    printQRInTerminal: true // QR code akan muncul di terminal untuk autentikasi
+// Simpan instance Socket.IO secara global
+globalThis.io = io;
+globalThis.whatsappClients = {};
+globalThis.latestQrs = {};
+
+io.on('connection', (socket) => {
+  console.log('Client connected: ', socket.id);
+  
+  // Kirim QR code default untuk session "device1" jika tersedia
+  if (globalThis.latestQrs['device1']) {
+    socket.emit('qr-update', { sessionId: 'device1', qr: globalThis.latestQrs['device1'] });
+  }
+  
+  socket.on('disconnect', () => {
+    console.log('Client disconnected: ', socket.id);
   });
+});
 
-  // Simpan kredensial saat terjadi pembaruan
-  client.ev.on('creds.update', saveCreds);
-
-  // Contoh: Menampilkan pesan yang diterima
-  client.ev.on('messages.upsert', (m) => {
-    console.log('Pesan baru:', JSON.stringify(m, null, 2));
-  });
-
-  return client;
+async function initSession(sessionId) {
+  const client = await createWhatsAppClient(sessionId);
+  globalThis.whatsappClients[sessionId] = client;
+  console.log(`Client for session ${sessionId} initialized.`);
 }
 
-let whatsappClient;
-startWhatsApp().then(client => {
-  whatsappClient = client;
-});
+async function main() {
+  // Inisialisasi session default (misalnya 'device1')
+  await initSession('device1');
 
-// Endpoint dasar untuk mengecek server
-app.get('/', (req, res) => {
-  res.send('Server Express dengan Baileys sudah berjalan!');
-});
+  app.use('/', whatsappRoutes);
 
-// Endpoint untuk mengirim pesan WhatsApp
-// Contoh: /send-message?number=6281234567890&message=Halo
-app.get('/send-message', async (req, res) => {
-  try {
-    const { number, message } = req.query;
-    if (!number || !message) {
-      return res.status(400).send('Parameter "number" dan "message" harus disertakan.');
-    }
-    // Format nomor WhatsApp: misalnya '6281234567890@s.whatsapp.net'
-    const jid = `${number}@s.whatsapp.net`;
-    const result = await whatsappClient.sendMessage(jid, { text: message });
-    res.send(result);
-  } catch (error) {
-    res.status(500).send(error.toString());
-  }
-});
+  server.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}
 
-app.listen(port, () => {
-  console.log(`Server berjalan pada port ${port}`);
-});
+main().catch(console.error);
