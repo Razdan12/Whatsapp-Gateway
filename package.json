@@ -1,0 +1,22 @@
+{
+  "name": "whatsapp-gateway",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "https://github.com/Razdan12",
+  "license": "ISC",
+  "description": "whatsapp gateway for OTP & bot whatsapp",
+  "dependencies": {
+    "@prisma/client": "^6.4.0",
+    "@whiskeysockets/baileys": "^6.7.13",
+    "body-parser": "^1.20.3",
+    "express": "^4.21.2",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.4.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

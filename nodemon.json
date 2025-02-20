@@ -1,0 +1,4 @@
+{
+    "ignore": ["auth_info/*", "auth_info.json"]
+  }
+  
