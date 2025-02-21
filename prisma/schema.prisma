@@ -1,45 +1,15 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model Message {
-  id        String   @id @default(uuid())
-  message   String
-  from      String?
-  to        String?
-  timestamp DateTime @default(now())
-  direction String
-}
-
-model Session {
-  id        String   @id @default(uuid())
-  sessionId String   @unique
-  authState Json
-  updatedAt DateTime @updatedAt
+generator client {
+  provider = "prisma-client-js"
 }
 
 model User {
-  id       String   @id @default(uuid())
-  username String    @unique
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
   password String
-  apiTokens ApiToken[]
-}
-
-model ApiToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  createdAt DateTime @default(now())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  apiToken String? @unique
 }

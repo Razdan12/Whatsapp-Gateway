@@ -1,43 +1,52 @@
 import express from 'express';
+import authRoutes from './routes/authRoutes.js';
+import whatsappRoutes from './routes/whatsappRoutes.js';
+import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
-import authRoutes from './routes/auth.routes.js';
-import apiTokenRoutes from './routes/apiToken.routes.js';
-import sessionRoutes from './routes/session.routes.js';
-import whatsappRoutes from './routes/whatsapp.routes.js';
-import { waAuthMiddleware } from './middleware/waAuth.js';
+import { startWhatsApp } from './utils/whatsappClient.js';
 
 const app = express();
-const port = process.env.PORT || 3000;
+app.disable('x-powered-by');
+app.use(
+  cors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  })
+);
 
-// Parsing JSON body untuk request
+const port = process.env.PORT || 3000;
 app.use(express.json());
 
-// Public routes (tanpa proteksi JWT/API token)
-app.use('/auth', authRoutes);
-app.use('/auth', apiTokenRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
-// Buat server HTTP dan inisialisasi Socket.IO
+app.get('/', (req, res) => {
+  res.send('Server Express dengan Baileys sudah berjalan!');
+});
+
 const server = http.createServer(app);
-const io = new Server(server);
-
-// Simpan instance global untuk Socket.IO, client WhatsApp, dan QR code masing-masing session
-globalThis.io = io;
-globalThis.whatsappClients = {};
-globalThis.latestQrs = {};
+const io = new Server(server, {
+  cors: {
+    origin: "*", 
+    methods: ["GET", "POST"]
+  }
+});
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-  // Misalnya, bisa mengirimkan QR code default jika tersedia, atau menunggu update dari session
+  console.log('Client connected: ' + socket.id);
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    console.log('Client disconnected: ' + socket.id);
   });
 });
 
-// Protected routes: hanya diakses jika API token valid
-app.use('/session', waAuthMiddleware, sessionRoutes);
-app.use('/wa', waAuthMiddleware, whatsappRoutes);
+startWhatsApp(io)
+  .then(() => {
+    console.log('WhatsApp client started');
+  })
+  .catch((err) => console.error(err));
 
 server.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server berjalan pada port ${port}`);
 });
