@@ -17,19 +17,15 @@ export async function startWhatsApp(io) {
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
       whatsappQR = qr;
-      // Emit event "qr" ke semua client yang terkoneksi
       io.emit('qr', { qr });
     }
     if (connection === 'open') {
       console.log('WhatsApp connected');
       whatsappQR = null;
-      // Emit event "whatsapp_connected"
       io.emit('whatsapp_connected', { message: 'WhatsApp connected' });
     }
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log('WhatsApp connection closed. Reconnecting:', shouldReconnect);
-      // Emit event "whatsapp_disconnected"
       io.emit('whatsapp_disconnected', { message: 'WhatsApp disconnected' });
       if (shouldReconnect) {
         startWhatsApp(io);

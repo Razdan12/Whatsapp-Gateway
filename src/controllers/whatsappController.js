@@ -2,6 +2,8 @@ import { getWhatsappClient, getWhatsappQR } from '../utils/whatsappClient.js';
 
 export async function getQRCode(req, res) {
   const qr = getWhatsappQR();
+  console.log(qr);
+  
   if (qr) {
     res.json({ qr });
   } else {
