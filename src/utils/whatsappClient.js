@@ -1,6 +1,11 @@
-import pkg, { DisconnectReason } from '@whiskeysockets/baileys';
+import pkg, { DisconnectReason, makeInMemoryStore } from '@whiskeysockets/baileys';
+import pino from 'pino';
+import { saveChats } from '../services/whatsapp.service.js';
 const { default: makeWASocket, useMultiFileAuthState } = pkg;
 
+// Inisialisasi store in-memory
+export const store = makeInMemoryStore({ logger: pino({ level: 'silent' }) });
+  
 let whatsappClient = null;
 let whatsappQR = null;
 
@@ -11,6 +16,9 @@ export async function startWhatsApp(io) {
     printQRInTerminal: false,
   });
 
+  // Bind store ke event client
+  store.bind(whatsappClient.ev);
+
   whatsappClient.ev.on('creds.update', saveCreds);
 
   whatsappClient.ev.on('connection.update', (update) => {
@@ -20,12 +28,12 @@ export async function startWhatsApp(io) {
       io.emit('qr', { qr });
     }
     if (connection === 'open') {
-      console.log('WhatsApp connected');
-      whatsappQR = null;
+      whatsappQR = 'connect';
       io.emit('whatsapp_connected', { message: 'WhatsApp connected' });
     }
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      whatsappQR = 'disconect';
       io.emit('whatsapp_disconnected', { message: 'WhatsApp disconnected' });
       if (shouldReconnect) {
         startWhatsApp(io);
@@ -34,7 +42,9 @@ export async function startWhatsApp(io) {
   });
 
   whatsappClient.ev.on('messages.upsert', (m) => {
-    console.log('New message:', JSON.stringify(m, null, 2));
+    saveChats(m)
+    io.emit('chat', { message: 'new chat' });
+   
   });
 }
 
