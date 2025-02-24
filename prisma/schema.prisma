@@ -11,17 +11,18 @@ model User {
   id       Int     @id @default(autoincrement())
   email    String  @unique
   password String
+  phoneWA  String?
   apiToken String? @unique
 }
 
 model Message {
   id        Int      @id @default(autoincrement())
-  jid       String // ID chat, misalnya '6281234567890@s.whatsapp.net' atau untuk grup '1234567890@g.us'
+  jid       String 
   fromMe    Boolean?
-  pushName String?
-  senderJid String // Pengirim pesan
-  content   String? // Isi pesan, jika berupa teks
-  mediaUrl  String? // URL media, jika pesan mengandung media
-  type      String // Tipe pesan, misalnya: "text", "image", "video", dll.
+  pushName  String?
+  senderJid String 
+  content   String? 
+  mediaUrl  String?
+  type      String 
   createdAt DateTime @default(now())
 }
