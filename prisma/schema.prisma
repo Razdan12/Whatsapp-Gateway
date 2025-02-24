@@ -11,5 +11,18 @@ model User {
   id       Int     @id @default(autoincrement())
   email    String  @unique
   password String
+  phoneWA  String?
   apiToken String? @unique
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  jid       String 
+  fromMe    Boolean?
+  pushName  String?
+  senderJid String 
+  content   String? 
+  mediaUrl  String?
+  type      String 
+  createdAt DateTime @default(now())
 }
