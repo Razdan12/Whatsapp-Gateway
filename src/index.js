@@ -1,50 +1,96 @@
-// src/index.js
 import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+import httpStatus from 'http-status-codes';
+import path from 'path';
 import http from 'http';
+
 import { Server } from 'socket.io';
-import whatsappRoutes from './routes/whatsapp.routes.js';
-import { createWhatsAppClient } from './services/whatsapp.service.js';
+import { startWhatsApp } from './utils/whatsappClient.js';
+import router from './routes.js';
+import handleError from './exceptions/handler.exception.js';
 
 const app = express();
+dotenv.config();
+
+app.disable('x-powered-by');
+app.use(
+  cors({
+    origin:  '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTION',
+    credentials: true,
+  })
+);
+
 const port = process.env.PORT || 3000;
+app.use(
+  bodyParser.json({
+    limit: '50mb',
+    type: ['application/json', 'application/vnd.api+json'],
+  })
+);
+app.use(
+  bodyParser.urlencoded({
+    limit: '50mb',
+    parameterLimit: 50000,
+    extended: true,
+  })
+);
+app.use(
+  bodyParser.raw({ type: ['application/json', 'application/vnd.api+json'] })
+);
+app.use(bodyParser.text({ type: 'text/html' }));
 
-// Buat server HTTP dan Socket.IO
-const server = http.createServer(app);
-const io = new Server(server);
+app.use('/api/v1', router);
 
-// Simpan instance Socket.IO secara global
-globalThis.io = io;
-globalThis.whatsappClients = {};
-globalThis.latestQrs = {};
-
-io.on('connection', (socket) => {
-  console.log('Client connected: ', socket.id);
-  
-  // Kirim QR code default untuk session "device1" jika tersedia
-  if (globalThis.latestQrs['device1']) {
-    socket.emit('qr-update', { sessionId: 'device1', qr: globalThis.latestQrs['device1'] });
-  }
-  
-  socket.on('disconnect', () => {
-    console.log('Client disconnected: ', socket.id);
+app.route('/').get((req, res) => {
+  return res.json({
+    message: 'Welcome to the API',
   });
 });
 
-async function initSession(sessionId) {
-  const client = await createWhatsAppClient(sessionId);
-  globalThis.whatsappClients[sessionId] = client;
-  console.log(`Client for session ${sessionId} initialized.`);
-}
 
-async function main() {
-  // Inisialisasi session default (misalnya 'device1')
-  await initSession('device1');
-
-  app.use('/', whatsappRoutes);
-
-  server.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+app.use((req, res) => {
+  return res.json({
+    errors: {
+      status: res.statusCode,
+      data: null,
+      error: {
+        code: httpStatus.StatusCodes.NOT_FOUND,
+        message: 'ENDPOINT_NOTFOUND',
+      },
+    },
   });
-}
+});
 
-main().catch(console.error);
+app.use(handleError);
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", 
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  socket.on('disconnect', () => {
+    console.log('Client disconnected: ' + socket.id);
+  });
+});
+
+startWhatsApp(io)
+  .then(() => {
+    console.log('WhatsApp client started');
+  })
+  .catch((err) => console.error(err));
+
+server.listen(port, () => {
+  console.log(`Server berjalan pada port ${port}`);
+});
+// parsing biginteger
+BigInt.prototype.toJSON = function () {
+  const int = Number.parseInt(this.toString());
+  return int ?? this.toString();
+};
