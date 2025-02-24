@@ -14,6 +14,11 @@ class WhatsappController extends BaseController {
     const data = await this.#service.getQRAuth();
     return this.ok(res, data, "QR Auth Berhasil di dapatkan");
   });
+  
+  status = this.wrapper(async (req, res) => {
+    const data = await this.#service.status()
+    return this.ok(res, data, "sukses");
+  });
 
   sendMessage = this.wrapper(async (req, res) => {
     const data = await this.#service.sendMessage(req.body);
