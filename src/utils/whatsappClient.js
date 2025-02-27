@@ -1,5 +1,6 @@
 import pkg, { DisconnectReason, makeInMemoryStore } from '@whiskeysockets/baileys';
 import pino from 'pino';
+import { IncomingMessages } from '../core/agregator/agregatorWhatsapp.service.js';
 
 const { default: makeWASocket, useMultiFileAuthState } = pkg;
 
@@ -12,7 +13,7 @@ export const startWhatsApp = async (io) => {
   const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
   whatsappClient = makeWASocket({
     auth: state,
-    printQRInTerminal: false,
+    printQRInTerminal: true,
   });
 
   store.bind(whatsappClient.ev);
@@ -41,6 +42,7 @@ export const startWhatsApp = async (io) => {
 
   whatsappClient.ev.on('messages.upsert', (m) => {
     io.emit('chat', { message: 'new chat' });
+    IncomingMessages(m)
    
   });
 }

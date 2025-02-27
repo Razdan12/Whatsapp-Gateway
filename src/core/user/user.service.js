@@ -1,5 +1,5 @@
-import BaseService from "../../base/service.base.js";
-import { prism } from "../../config/prisma.db.js";
+import BaseService from '../../base/service.base.js';
+import { prism } from '../../config/prisma.db.js';
 
 class UserService extends BaseService {
   constructor() {
@@ -36,6 +36,10 @@ class UserService extends BaseService {
     const data = await this.db.user.delete({ where: { id } });
     return data;
   };
+
+  findByPhone = async (phone) => {
+    return await this.db.user.findFirst({ where: { phoneWA: phone } });
+  };
 }
 
-export default UserService;  
+export default UserService;

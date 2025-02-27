@@ -7,35 +7,6 @@ import prisma from '../config/prisma.db.js';
 export default function authWa(roles) {
   return async (req, res, next) => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return next(
-          new ApiError(
-            httpStatus.UNAUTHORIZED,
-            'NO_AUTHORIZATION',
-            'Please authenticate with JWT token'
-          )
-        );
-      }
-      
-      const [bearer, token] = authHeader.split(' ');
-      if (bearer !== 'Bearer' || !token) {
-        return next(
-          new ApiError(
-            httpStatus.UNAUTHORIZED,
-            'NO_AUTHORIZATION',
-            'Please authenticate with JWT token'
-          )
-        );
-      }
-      
-      let decoded;
-      try {
-        decoded = verifyToken(token);
-      } catch (e) {
-        throw new Unauthenticated();
-      }
-      
       const apiToken = req.headers['x-api-key'];
       if (!apiToken) {
         return next(
@@ -61,16 +32,6 @@ export default function authWa(roles) {
         );
       }
     
-      if (decoded.id && user.id !== decoded.id) {
-        return next(
-          new ApiError(
-            httpStatus.UNAUTHORIZED,
-            'NO_DATA',
-            'JWT token does not match API token'
-          )
-        );
-      }
-      
       req.user = user;
       next();
     } catch (e) {
