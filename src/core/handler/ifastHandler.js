@@ -1,6 +1,8 @@
 // ifastHandler.js
 import { getWhatsappClient } from '../../utils/whatsappClient.js';
 import { ifastModule } from '../modul/ifast/ifastModule.js';
+import { loadPromptData } from '../../prompts/index.js'; 
+const promptData = loadPromptData();
 
 export const handleIfast = async (prompt, msg) => {
   const client = getWhatsappClient();
@@ -19,9 +21,8 @@ export const handleIfast = async (prompt, msg) => {
   let found = false;
   for (const [keyword, handler] of Object.entries(ifastSubHandlers)) {
     if (lowerPrompt.includes(keyword.toLowerCase())) {
-      console.log(`Handling Ifast ${keyword} command`);
       await handler(prompt, msg);
-      await client.sendMessage(jid, { text: `Perintah ${keyword} Ifast telah berhasil.` });
+      await client.sendMessage(jid, { text: promptData.ifast[keyword] });
       found = true;
       break;
     }

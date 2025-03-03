@@ -15,14 +15,9 @@ model User {
   apiToken String? @unique
 }
 
-model Message {
+model ListUser {
   id        Int      @id @default(autoincrement())
-  jid       String 
-  fromMe    Boolean?
-  pushName  String?
-  senderJid String 
-  content   String? 
-  mediaUrl  String?
-  type      String 
-  createdAt DateTime @default(now())
+  name      String
+  whatsapp  String   @unique
+  blackList Boolean? @default(false)
 }

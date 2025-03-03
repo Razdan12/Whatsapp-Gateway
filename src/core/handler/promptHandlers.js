@@ -1,30 +1,24 @@
 // promptHandlers.js
 import { getWhatsappClient } from '../../utils/whatsappClient.js';
-import { promptMapping } from '../agregator/promptConfig.js';
+import { promptMapping } from '../../prompts/promptConfig.js';
 import { handleIfast } from './ifastHandler.js';
+import { loadPromptData } from '../../prompts/index.js'; 
+const promptData = loadPromptData();
 
 export const promptHandlers = {
-  handlePrompt: async (prompt, msg) => {
-    const client = getWhatsappClient();
-    const jid = msg.key.remoteJid;
-    await client.sendMessage(jid, { text: `Anda memicu command PROMPT dengan: ${prompt}` });
-  },
+ 
   handleHelp: async (prompt, msg) => {
     const client = getWhatsappClient();
     const jid = msg.key.remoteJid;
-    await client.sendMessage(jid, { text: `Ini adalah bantuan. Silakan gunakan command yang tepat.` });
+    await client.sendMessage(jid, { text: promptData.general.help });
   },
-  handleExecute: async (prompt, msg) => {
+ 
+  handleKenalan: async (prompt, msg) => {
     const client = getWhatsappClient();
     const jid = msg.key.remoteJid;
-    await client.sendMessage(jid, { text: `Anda menjalankan perintah EXECUTE. Memproses...` });
+    await client.sendMessage(jid, { text: promptData.general.kenalan });
   },
-  handleCommand: async (prompt, msg) => {
-    const client = getWhatsappClient();
-    const jid = msg.key.remoteJid;
-    await client.sendMessage(jid, { text: `Anda memicu COMMAND.` });
-  },
-  // Handler Ifast sudah diimpor dari file ifastHandler.js
+ 
   handleIfast: handleIfast
 };
 
@@ -32,9 +26,8 @@ export const fallbackMessage = async (msg) => {
   const client = getWhatsappClient();
   const jid = msg.key.remoteJid;
   await client.sendMessage(jid, {
-    text: 'saya tidak mengerti apa maksud anda, bisa di detailkan lagi perintahnya? atau gunakan perintah *Help* untuk bantuan'
+    text: promptData.fallback
   });
-  console.log('Fallback response sent');
 };
 
 export const handlePromptCommand = async (prompt, msg) => {
@@ -45,7 +38,6 @@ export const handlePromptCommand = async (prompt, msg) => {
     if (lowerPrompt.includes(trigger.toLowerCase())) {
       const handler = promptHandlers[handlerName];
       if (handler) {
-        console.log(`Executing handler for trigger: ${trigger}`);
         await handler(prompt, msg);
         handled = true;
         break;

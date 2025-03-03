@@ -1,7 +1,8 @@
 // aggregatorWhatsapp.service.js
 import prism from '../../config/prisma.db.js';
-import { promptMapping } from './promptConfig.js';
+import { promptMapping } from '../../prompts/promptConfig.js';
 import { handlePromptCommand, fallbackMessage } from '../handler/promptHandlers.js';
+import { getWhatsappClient } from '../../utils/whatsappClient.js';
 
 export const IncomingMessages = async (messageUpdate) => {
   const messages = messageUpdate.messages || [];
@@ -10,22 +11,22 @@ export const IncomingMessages = async (messageUpdate) => {
   // Ambil remoteJid dari pesan pertama untuk validasi pengguna
   const jid = messages[0].key.remoteJid;
   const phoneNumber = jid.split('@')[0];
-  const user = await prism.user.findFirst({ where: { phoneWA: phoneNumber } });
+  const user = await prism.listUser.findUnique({ where: { whatsapp: phoneNumber } });
   if (!user) return;
+  
 
   for (const msg of messages) {
-    // Proses pesan yang:
-    // - Bukan dikirim oleh bot
-    // - Bukan broadcast
-    // - Bukan pesan dari grup
     if (!msg.key.fromMe && !msg.broadcast && !isGroupMessage(msg)) {
+      if (user.blackList){
+        const client = getWhatsappClient();
+        await client.sendMessage(jid, { text: `halo ${user.name}, maaf ya kamu tidak diperbolehkan lagi untuk chat dengan MIRA` });
+        return
+      }
       const text = extractMessageText(msg);
       if (text) {
         if (containsTrigger(text)) {
-          console.log('Trigger ditemukan, menjalankan prompt handling');
           await handlePromptCommand(text, msg);
         } else {
-          console.log('Tidak ada trigger, mengirim fallback message');
           await fallbackMessage(msg);
         }
       }
@@ -49,7 +50,6 @@ const extractMessageText = (msg) => {
 const containsTrigger = (text) => {
   // Ambil daftar trigger dari promptMapping (menggunakan key-nya)
   const triggers = Object.keys(promptMapping);
-  console.log('Daftar triggers:', triggers);
   return triggers.some((trigger) =>
     text.toLowerCase().includes(trigger.toLowerCase())
   );
