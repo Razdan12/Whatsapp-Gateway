@@ -10,7 +10,7 @@ import fs from 'fs';
 const APP_DEBUG = process.env.APP_DEBUG;
 
 const errorHandler = (err, req, res, next) => {
-  // delete uploaded files on request for storage efficiency
+  // Hapus file yang diupload (jika ada) untuk efisiensi penyimpanan
   if (err) {
     const uploaded = [];
 
@@ -28,9 +28,9 @@ const errorHandler = (err, req, res, next) => {
 
     if (uploaded.length)
       uploaded.forEach((up) => {
-        fs.unlink(up.path, (err) => {
-          if (err) {
-            console.error('ERR(file): ', err);
+        fs.unlink(up.path, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error('ERR(file): ', unlinkErr);
           }
         });
       });
@@ -40,9 +40,10 @@ const errorHandler = (err, req, res, next) => {
     return next(err);
   }
 
+  // Contoh penanganan error spesifik dengan status code yang tepat
+
   if (err instanceof ValidationError) {
-    res.status(httpStatus.StatusCodes.BAD_REQUEST);
-    return res.json({
+    return res.status(httpStatus.StatusCodes.BAD_REQUEST).json({
       errors: {
         status: httpStatus.StatusCodes.BAD_REQUEST,
         data: null,
@@ -55,20 +56,21 @@ const errorHandler = (err, req, res, next) => {
   }
 
   if (err instanceof PrismaClientKnownRequestError) {
-    return res.json({
+    // Misal kita gunakan status BAD_REQUEST untuk error validasi Prisma
+    return res.status(httpStatus.StatusCodes.BAD_REQUEST).json({
       errors: {
-        status: res.statusCode,
+        status: httpStatus.StatusCodes.BAD_REQUEST,
         data: null,
         error: {
           code: err.name,
-          message: err?.meta?.target || err,
+          message: err?.meta?.target || err.message,
         },
       },
     });
   }
 
   if (err instanceof ApiError) {
-    return res.json({
+    return res.status(err.statusCode).json({
       errors: {
         status: err.statusCode,
         data: null,
@@ -80,23 +82,23 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Default: gunakan statusCode yang tersedia atau INTERNAL_SERVER_ERROR
   const statusCode =
     err.http_code ||
     err.statusCode ||
     httpStatus.StatusCodes.INTERNAL_SERVER_ERROR ||
     500;
   res.status(statusCode);
-
   return res.json({
     errors: {
-      status: res.statusCode,
+      status: statusCode,
       data: null,
       error: {
         code: err.name,
         message: err.message,
         trace:
-          APP_DEBUG && res.statusCode !== httpStatus.StatusCodes.NOT_FOUND
-            ? err.stack
+          APP_DEBUG && statusCode !== httpStatus.StatusCodes.NOT_FOUND
+            ? err.stack.split('\n')
             : undefined,
       },
     },

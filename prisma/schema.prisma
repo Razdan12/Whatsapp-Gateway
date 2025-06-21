@@ -8,21 +8,84 @@ generator client {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  phoneWA  String?
-  apiToken String? @unique
+  id         String      @id @default(uuid())
+  email      String      @unique
+  password   String
+  phoneWA    String?     @unique
+  name       String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  lastLogin  DateTime?
+  isActive   Boolean     @default(true)
+  role       String      @default("user")
+  profile    String?
+  apiToken   String?     @unique
+  totalToken Int         @default(100)
+  sessions   Session[]   @relation("UserSessions")
+  blaclist   BlackList[] @relation("blacklist")
+  whitelist  WhiteList[] @relation("whitelist")
 }
 
-model Message {
-  id        Int      @id @default(autoincrement())
-  jid       String 
-  fromMe    Boolean?
-  pushName  String?
-  senderJid String 
-  content   String? 
-  mediaUrl  String?
-  type      String 
-  createdAt DateTime @default(now())
+model Session {
+  id        String    @id @default(uuid())
+  userId    String
+  name      String
+  user      User      @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  isActive  Boolean   @default(true)
+  status    Boolean?  @default(false)
+  webhook   Webhook[] @relation("session")
+  logApi    LogApi[]  @relation("logApi")
+}
+
+model Webhook {
+  id         String       @id @default(uuid())
+  url        String       @unique
+  event      String
+  SessionId  String
+  method     String       @default("POST")
+  headers    Json?
+  payload    Json?
+  secret     String?
+  isActive   Boolean      @default(true)
+  sesion     Session      @relation("session", fields: [SessionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  lastTriger DateTime?
+  logWebhook LogWebhook[] @relation("logWebhook")
+}
+
+model LogWebhook {
+  id         String   @id @default(uuid())
+  idWebhook  String
+  DateTriger DateTime
+  Status     String
+  payload    String?
+  webhook    Webhook  @relation("logWebhook", fields: [idWebhook], references: [id], onDelete: Cascade)
+}
+
+model LogApi {
+  id        String   @id @default(uuid())
+  idSession String
+  Date      DateTime
+  Methode   String
+  payload   String?
+  status    String
+  session   Session  @relation("logApi", fields: [idSession], references: [id], onDelete: Cascade)
+}
+
+model BlackList {
+  id         String  @id @default(uuid())
+  idUser     String
+  noWhatsapp String
+  note       String?
+  user       User    @relation("blacklist", fields: [idUser], references: [id], onDelete: Cascade)
+}
+
+model WhiteList {
+  id         String  @id @default(uuid())
+  idUser     String
+  noWhatsapp String
+  note       String?
+  user       User    @relation("whitelist", fields: [idUser], references: [id], onDelete: Cascade)
 }

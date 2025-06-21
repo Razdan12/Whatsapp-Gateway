@@ -4,7 +4,8 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "nodemon src/index.js",
+    "core": "node generator/core.js"
   },
   "keywords": [],
   "author": "https://github.com/Razdan12",
@@ -13,8 +14,8 @@
   "dependencies": {
     "@joi/date": "^2.1.1",
     "@prisma/client": "^6.4.0",
-    "@whiskeysockets/baileys": "^6.7.13",
     "axios": "^1.7.9",
+    "baileys": "^6.7.18",
     "base64url": "^3.0.1",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",

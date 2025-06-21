@@ -9,9 +9,11 @@ import authWa from '../../middlewares/whatsappAuth.midleware.js';
 const r = Router(),
   validator = WhatsappValidator,
   controller = new WhatsappController();
-  const upload = multer({ dest: 'uploads/' })
+const upload = multer({ dest: 'uploads/' });
 
-r.get('/qr', authWa(), controller.getQr);
+r.get('/qr', controller.getQr);
+
+r.get('/start', auth([]), controller.startWhatsapp);
 
 r.post(
   '/send-message',

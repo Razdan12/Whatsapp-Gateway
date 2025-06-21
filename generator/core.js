@@ -130,7 +130,8 @@ export default ${name}Controller;
   {
     name: nameL + '.service.js',
     content: `import BaseService from "../../base/service.base.js";
-import prisma from '../config/prisma.db.js';
+import prisma from '../../config/prisma.db.js';
+
 
 class ${name}Service extends BaseService {
   constructor() {

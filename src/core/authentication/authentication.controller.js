@@ -24,6 +24,12 @@ class AuthenticationController extends BaseController {
     const data = await this.#service.generateToken(req.user.userId);
     return this.ok(res, data, 'Berhasil generate token');
   });
+
+
+  refresh = this.wrapper(async (req, res) => {
+    const data = await this.#service.refreshToken(req.body.refresh_token);
+    return this.ok(res, data, 'Berhasil login!');
+  });
 }
 
 export default AuthenticationController;

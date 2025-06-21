@@ -2,11 +2,16 @@ import express from 'express';
 const router = express.Router();
 import whatsappRouter from "./core/whatsapp/whatsapp.router.js";
 import authenticationRouter from './core/authentication/authentication.router.js';
+import sessionRouter from './core/session/session.router.js';
 
 export const routeLists = [
     {
         path : '/wa',
         route: whatsappRouter
+    },
+    {
+        path : '/session',
+        route: sessionRouter
     },
     {
         path : '/auth',

@@ -61,10 +61,11 @@ class BaseController {
       try {
         return await method.apply(this, [req, res, ...args]);
       } catch (err) {
-        errorHandler(err, req, res);
+        return errorHandler(err, req, res);
       }
     };
   }
+  
 
   joinBrowseQuery = (query, field, colval) => {
     query[field] = query[field] ? `${query[field]}+${colval}` : colval;

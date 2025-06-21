@@ -1,9 +1,10 @@
 import BaseService from '../../base/service.base.js';
 import { Forbidden } from '../../exceptions/catch.execption.js';
 import { compare, hash } from '../../helpers/bcrypt.helper.js';
-import { generateAccessToken } from '../../helpers/jwt.helper.js';
+import { generateAccessToken, generateRefreshToken } from '../../helpers/jwt.helper.js';
 import prisma from '../../config/prisma.db.js';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 
 class AuthenticationService extends BaseService {
   constructor() {
@@ -20,8 +21,11 @@ class AuthenticationService extends BaseService {
     if (!pwValid) throw new BadRequest('Password tidak cocok');
 
     const access_token = await generateAccessToken(user);
-
-    return { user: this.exclude(user, ['password']), token: access_token };
+    const refresh_token = await generateRefreshToken(user);
+    return {
+      user: this.exclude(user, ['password', 'apiToken', 'isVerified']),
+      token: { access_token, refresh_token },
+    };
   };
 
   register = async (payload) => {
@@ -38,10 +42,10 @@ class AuthenticationService extends BaseService {
       },
     });
 
-    return {
-      data,
-      message: 'Akun anda berhasil terdaftar! Silahkan verifikasi email anda',
-    };
+    const access_token = await generateAccessToken(user);
+    const refresh_token = await generateRefreshToken(user);
+
+    return { user: this.exclude(data, ['password']), token: { access_token, refresh_token } };
   };
 
   generateToken = async (id) => {
@@ -56,6 +60,23 @@ class AuthenticationService extends BaseService {
       });
       return { apiToken: user.apiToken };
     } else return {apiToken: userData.apiToken};
+  };
+
+
+  refreshToken = async (refresh) => {
+    const payload = jwt.decode(refresh);
+
+    const user = await this.db.user.findUnique({
+      where: { email: payload.email },
+    });
+    if (!user) throw new NotFound('Akun tidak ditemukan');
+
+    const access_token = await generateAccessToken(user);
+    const refresh_token = await generateRefreshToken(user);
+    return {
+      user: this.exclude(user, ['password', 'apiToken', 'isVerified']),
+      token: { access_token, refresh_token },
+    };
   };
 }
 
