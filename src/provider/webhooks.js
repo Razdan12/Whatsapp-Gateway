@@ -1,11 +1,12 @@
 import prism from '../config/prisma.db.js';
 
-export const handleWebhook = async (Message, id) => {
+export const handleWebhook = async (Message, id, type) => {
   const webhook = await prism.webhook.findMany({
-    where: { sessionId: id },
+    where: { SessionId: id, event: type.type , isActive: true},
   });
-  if (!webhook || webhook.length === 0) return;
+  if (!webhook || webhook.length === 0 ) return;
   for (const wh of webhook) {
+    if(wh.isGroup !== type.isGroup) return
     try {
       const response = await fetch(wh.url, {
         method: wh.method || 'POST',
@@ -14,7 +15,6 @@ export const handleWebhook = async (Message, id) => {
         },
         body: JSON.stringify({
           message: Message,
-          payload: wh.payload || {},
           timestamp: new Date().toISOString(),
         }),
       });

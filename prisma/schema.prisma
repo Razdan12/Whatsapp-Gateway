@@ -24,6 +24,7 @@ model User {
   sessions   Session[]   @relation("UserSessions")
   blaclist   BlackList[] @relation("blacklist")
   whitelist  WhiteList[] @relation("whitelist")
+  webhook    Webhook[]   @relation("user")
 }
 
 model Session {
@@ -40,8 +41,10 @@ model Session {
 
 model Webhook {
   id         String       @id @default(uuid())
-  url        String       @unique
+  url        String
   event      String
+  isGroup    Boolean?     @default(false)
+  userId     String?
   SessionId  String
   method     String       @default("POST")
   headers    Json?
@@ -49,6 +52,7 @@ model Webhook {
   secret     String?
   isActive   Boolean      @default(true)
   sesion     Session      @relation("session", fields: [SessionId], references: [id], onDelete: Cascade)
+  user       User?        @relation("user", fields: [userId], references: [id], onDelete: Cascade)
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   lastTriger DateTime?
